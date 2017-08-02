@@ -1,5 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-	<h1>Hellow world</h1>
+	<h1>{{header}}</h1>
+	{% for item in items %}
+		<h2><a href={{"/item/" ~ item.id}}>{{item.name}} ({{item.category.title()}})</a></h2>
+		<p>{{item.time}}</p>
+		<br>
+	{% endfor %}
 {% endblock %}

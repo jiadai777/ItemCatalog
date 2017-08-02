@@ -1,7 +1,8 @@
 from flask import Flask, render_template, request, redirect, jsonify, url_for, flash
-from sqlalchemy import create_engine, asc
+from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
 from flask import session as login_session
+from database_setup import Base, Item, User
 import random
 import string
 from oauth2client.client import flow_from_clientsecrets
@@ -16,6 +17,18 @@ app = Flask(__name__)
 CLIENT_ID = json.loads(
     open('client_secrets.json', 'r').read())['web']['client_id']
 
+# Connect to Database and create database session
+engine = create_engine('sqlite:///itemswithusers.db')
+Base.metadata.bind = engine
+
+DBSession = sessionmaker(bind=engine)
+session = DBSession()
+
+categories = ["soccer", "basketball", "baseball", "frisbee",
+            "snowboarding", "rockclimbing", "football",
+            "skating", "hockey"]
+
+"""
 # Create anti-forgery state token
 @app.route('/login')
 def showLogin():
@@ -76,7 +89,7 @@ def gconnect():
 
     stored_access_token = login_session.get('access_token')
     stored_gplus_id = login_session.get('gplus_id')
-    if stored_credentials is not None and gplus_id == stored_gplus_id:
+    if stored_access_token == access_token and gplus_id == stored_gplus_id:
         response = make_response(json.dumps('Current user is already connected.'),
                                  200)
         response.headers['Content-Type'] = 'application/json'
@@ -116,8 +129,41 @@ def gconnect():
     print "done!"
     return output
 
+@app.route('/gdisconnect')
+def gdisconnect():
+    # Only disconnect a connected user.
+    access_token = login_session.get('access_token')
+    if access_token is None:
+        response = make_response(
+            json.dumps('Current user not connected.'), 401)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    url = 'https://accounts.google.com/o/oauth2/revoke?token=%s' % access_token
+    h = httplib2.Http()
+    result = h.request(url, 'GET')[0]
+    if result['status'] == '200':
+        del login_session['access_token'] 
+        del login_session['gplus_id']
+        del login_session['username']
+        del login_session['email']
+        del login_session['picture']
+        response = make_response(json.dumps('Successfully disconnected.'), 200)
+        response.headers['Content-Type'] = 'application/json'
+        return response
+    else:
+        response = make_response(json.dumps('Failed to revoke token for given user.', 400))
+        response.headers['Content-Type'] = 'application/json'
+        return response
+
 # User Helper Functions
 
+def createUser(login_session):
+    newUser = User(name=login_session['username'], email=login_session[
+                   'email'], picture=login_session['picture'])
+    session.add(newUser)
+    session.commit()
+    user = session.query(User).filter_by(email=login_session['email']).one()
+    return user.id
 
 def createUser(login_session):
     newUser = User(name=login_session['username'], email=login_session[
@@ -128,12 +174,58 @@ def createUser(login_session):
     return user.id
 
 
+def getUserInfo(user_id):
+    user = session.query(User).filter_by(id=user_id).one()
+    return user
+
+
+def getUserID(email):
+    try:
+        user = session.query(User).filter_by(email=email).one()
+        return user.id
+    except:
+        return None
+"""
 
 @app.route('/')
+@app.route('/items')
 def showItems():
-	return render_template("items.html")
+    # if 'username' not in login_session:
+    #    return render_template("items.html", logbtn="Login", loglink="login")
+    # else:
+    items = session.query(Item).order_by(desc(Item.time))
+    return render_template("items.html", items=items,
+                            addbtn="Add Item", categories=categories,
+                            header="Latest items:")
+
+@app.route('/categories/<cate>')
+def showCategorizedItems(cate):
+    items = session.query(Item).filter_by(category=cate.lower())
+    return render_template("items.html", items=items,
+                            addbtn="Add Item", categories=categories,
+                            header=cate.title()+" Items ("+str(items.count())+" items)")
+
+@app.route('/newitem', methods=['GET', 'POST'])
+def addItem():
+    if request.method == 'POST':
+        name = request.form['name']
+        cate = request.form['cate'].lower()
+        description = request.form['description']
+        item = Item(name=name, category=cate, user_id=1, description=description)
+        session.add(item)
+        session.commit()
+        return redirect('/item/' + str(item.id))
+
+    return render_template("new-item.html", categories=categories)
+
+@app.route('/item/<int:itemid>')
+def singleItem(itemid):
+    item = session.query(Item).filter_by(id=itemid).one()
+    return render_template("one-item.html", item=item, addbtn="Add Item", categories=categories)
+
+
 
 if __name__ == '__main__':
-	app.secret_key = 'super_secret_key'
-	app.debug = True
-	app.run(host='0.0.0.0', port=5000)
+    app.secret_key = 'super_secret_key'
+    app.debug = True
+    app.run(host='0.0.0.0', port=5000)
