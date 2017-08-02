@@ -1,23 +1,26 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h2>Add a new item:</h2>
+    <h2>Edit item:</h2>
     <form method="post">
       <div class="form-group">
         <label>Name:</label>
-        <input type="text" class="form-control" name="name">
+        <input type="text" class="form-control" name="name" value={{item.name}}>
       </div>
       <div class="form-group">
         <label>Category:</label>
         <select class="form-control" name="cate">
-        {% for cate in categories %}
-            <option>{{cate.title()}}</option>
-        {% endfor %}
+          <option>{{item.category.title()}}</option>
+          {% for cate in categories %}
+              {% if cate != item.category %}
+                <option>{{cate.title()}}</option>
+              {% endif %}
+          {% endfor %}
         </select>
       </div>
       <div class="form-group">
         <label>Description:</label>
-        <textarea class="form-control" name="description" rows="8"></textarea>
+        <textarea class="form-control" name="description" rows="8">{{item.description}}</textarea>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
       <a href="/" class="btn btn-default">Cancel</a>

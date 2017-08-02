@@ -28,7 +28,6 @@ categories = ["soccer", "basketball", "baseball", "frisbee",
             "snowboarding", "rockclimbing", "football",
             "skating", "hockey"]
 
-"""
 # Create anti-forgery state token
 @app.route('/login')
 def showLogin():
@@ -185,7 +184,6 @@ def getUserID(email):
         return user.id
     except:
         return None
-"""
 
 @app.route('/')
 @app.route('/items')
@@ -193,7 +191,7 @@ def showItems():
     # if 'username' not in login_session:
     #    return render_template("items.html", logbtn="Login", loglink="login")
     # else:
-    items = session.query(Item).order_by(desc(Item.time))
+    items = session.query(Item).order_by(asc(Item.name))
     return render_template("items.html", items=items,
                             addbtn="Add Item", categories=categories,
                             header="Latest items:")
@@ -223,7 +221,27 @@ def singleItem(itemid):
     item = session.query(Item).filter_by(id=itemid).one()
     return render_template("one-item.html", item=item, addbtn="Add Item", categories=categories)
 
+@app.route('/<int:itemid>/edititem', methods=['GET', 'POST'])
+def editItem(itemid):
+    item = session.query(Item).filter_by(id=itemid).one()
+    if request.method == 'POST':
+        item.name = request.form['name']
+        item.category = request.form['cate'].lower()
+        item.description = request.form['description']
+        session.commit()
+        return redirect('/item/' + str(item.id))
 
+    return render_template('edit-item.html', item=item, categories=categories)
+
+@app.route('/<int:itemid>/deleteitem', methods=['GET', 'POST'])
+def deleteItem(itemid):
+    item = session.query(Item).filter_by(id=itemid).one()
+    if request.method == 'POST':
+        session.delete(item)
+        session.commit()
+        return redirect('/')
+
+    return render_template('delete-item.html', item=item)
 
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'

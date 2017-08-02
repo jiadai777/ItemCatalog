@@ -18,7 +18,7 @@ class Item(Base):
     __tablename__ = 'item'
 
     id = Column(Integer, primary_key=True)
-    time = Column(DateTime(timezone=True))
+    # time = Column(DateTime, default=datetime.datetime.utcnow)
     name = Column(String(250), nullable=False)
     category = Column(String(250), nullable=False)
     description = Column(String(500), nullable=False)
@@ -32,6 +32,7 @@ class Item(Base):
             'name': self.name,
             'id': self.id,
             'category': self.category
+            # 'description': self.description
         }
 
 engine = create_engine('sqlite:///itemswithusers.db')
