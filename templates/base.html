@@ -11,6 +11,7 @@
     <!-- END PRE-REQUISITES FOR GOOGLE SIGN IN -->
 </head>
 <body>
+    <!-- NAVIGATION HEADER -->
     <nav class="navbar navbar-default">
       <div class="container-fluid">
         <div class="navbar-header">
@@ -21,13 +22,15 @@
           <li class="dropdown">
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Categories <span class="caret"></span></a>
             <ul class="dropdown-menu">
+            <!-- CATEGORY DROPDOWN MENU -->
               {% for cate in categories %}
                 <li><a href={{"/categories/" ~ cate.lower()}}>{{cate.title()}}</a></li>
               {% endfor %}
+            <!-- END OF CATEGORY DROPDOWN MENU -->
             </ul>
           </li>
           {% if 'username' in session %}
-          <li><a href="/newitem">{{addbtn}}</a></li>
+          <li><a href="/newitem">Add Item</a></li>
           {% endif %}
         </ul>
         {% if 'username' in session %}
@@ -38,9 +41,26 @@
         {% endif %}
       </div>
     </nav>
+    <!-- END OF NAVIGATION HEADER -->
 
-    <b class="good-msg">{{goodmsg}}</b>
-    <b class="bad-msg">{{badmsg}}</b>
+    <!-- GET AND DISPLAY FLASHED MESSAGES -->
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <div class="container col-lg-10 col-lg-offset-1 msg">
+        {% for msg in messages %}
+          <b class="msg">{{msg}}</b>
+        {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+    <!-- END OF FLASHED MESSAGES -->
+
+    <!-- DISPLAY ERROR -->
+    <div class="error">
+      <b>{{error}}</b>
+    </div>
+    <br>
+    <!-- END OF ERROR MESSAGES -->
 
     <div class="container">
         {% block content %}

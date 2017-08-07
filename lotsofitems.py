@@ -3,6 +3,18 @@ from sqlalchemy.orm import sessionmaker
 import random
 import string
 from database_setup import User, Base, Item
+from datetime import datetime
+
+"""
+######################### WARNING #########################
+RUNNING THIS FILE WILL DELETE ALL THE DATABASE ITEMS YOU HAVE
+AND CREATE 20 ITEMS WITH RANDOM NAMES, DESCRIPTIONS, AND
+CATEGORIES.
+
+This program is intended for quick test of the main.py and its
+templates and websites. You do not have to run this program in
+order to visit the Item Catalog website.
+"""
 
 engine = create_engine('sqlite:///itemswithusers.db')
 # Bind the engine to the metadata of the Base class so that the
@@ -10,25 +22,12 @@ engine = create_engine('sqlite:///itemswithusers.db')
 Base.metadata.bind = engine
 
 DBSession = sessionmaker(bind=engine)
-# A DBSession() instance establishes all conversations with the database
-# and represents a "staging zone" for all the objects loaded into the
-# database session object. Any change made against the objects in the
-# session won't be persisted into the database until you call
-# session.commit(). If you're not happy about the changes, you can
-# revert all of them back to the last commit by calling
-# session.rollback()
 session = DBSession()
 
 session.query(Item).delete()
 session.commit()
-"""
-item1 = Item(name="shirt", category="soccer", user_id=1, description="fha ihfdhvjhvjkfjvhlvhjfdvi dvds  hv huhuvhduvhdfushufsh u")
 
-session.add(item1)
-session.commit()
-"""
 # generate 20 random items
-
 categories = ["soccer", "basketball", "baseball", "frisbee",
 			"snowboarding", "rockclimbing", "football",
 			"skating", "hockey"]
@@ -38,8 +37,9 @@ for x in xrange(20):
                     for x in xrange(5))
 	description = ''.join(random.choice(string.ascii_lowercase + string.digits)
                     for x in xrange(200))
-	cate = categories[random.randint(0, 8)]
-	item = Item(name=name, category=cate, user_id=x, description=description)
+	cate = categories[random.randint(0, len(categories) - 1)]
+	item = Item(name=name, category=cate, user_id=x,
+				description=description)
 	session.add(item)
 	session.commit()
 

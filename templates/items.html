@@ -3,8 +3,9 @@
 {% block content %}
 	<h1>{{header}}</h1>
 	{% for item in items %}
-		<h2><a href={{"/item/" ~ item.id}}>{{item.name}} ({{item.category.title()}})</a></h2>
-		<p>{{item.time}}</p>
+		<h2><a href={{"/item/" ~ item.id}}>{{item.name}}</a></h2>
+		<span><i>({{item.category.title()}})</i></span>
+		<p>Time added: {{item.time_added.strftime('%Y-%b-%d, %H:%M:%S')}}</p>
 		<br>
 	{% endfor %}
 {% endblock %}

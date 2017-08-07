@@ -24,6 +24,7 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+# A list of current categories for items
 categories = ["soccer", "basketball", "baseball", "frisbee",
             "snowboarding", "rockclimbing", "football",
             "skating", "hockey"]
@@ -185,63 +186,100 @@ def getUserID(email):
     except:
         return None
 
+# JSON APIs to view items information
+@app.route('/item/<int:itemid>/JSON')
+def oneItemJSON(itemid):
+    item = session.query(Item).filter_by(id=itemid).one()
+    return jsonify(item=item.serialize)
+
+@app.route('/items/JSON')
+def itemsJSON():
+    items = session.query(Item).all()
+    return jsonify(items=[i.serialize for i in items])
+
+# shows all items ordered by latest items
 @app.route('/')
 @app.route('/items')
 def showItems():
-    # if 'username' not in login_session:
-    #    return render_template("items.html", logbtn="Login", loglink="login")
-    # else:
-    items = session.query(Item).order_by(asc(Item.name))
+    items = session.query(Item).order_by(desc(Item.time_added))
     return render_template("items.html", items=items,
-                            addbtn="Add Item", categories=categories,
+                            categories=categories,
                             header="Latest items:")
 
+# show items of a specific category
 @app.route('/categories/<cate>')
 def showCategorizedItems(cate):
     items = session.query(Item).filter_by(category=cate.lower())
     return render_template("items.html", items=items,
-                            addbtn="Add Item", categories=categories,
-                            header=cate.title()+" Items ("+str(items.count())+" items)")
+                            categories=categories,
+                            header=cate.title()+
+                            " Items ("+str(items.count())+" items)")
 
+# create a new item
 @app.route('/newitem', methods=['GET', 'POST'])
 def addItem():
+    if 'username' not in login_session:
+        redirect('/login')
     if request.method == 'POST':
         name = request.form['name']
         cate = request.form['cate'].lower()
         description = request.form['description']
-        item = Item(name=name, category=cate, user_id=1, description=description)
+        user_id=login_session['user_id']
+        item = Item(name=name, category=cate, user_id=user_id, description=description)
         session.add(item)
         session.commit()
+        flash("Item successfully added!")
         return redirect('/item/' + str(item.id))
+    else:
+        return render_template("new-item.html", categories=categories)
 
-    return render_template("new-item.html", categories=categories)
-
+# shows a single item
 @app.route('/item/<int:itemid>')
 def singleItem(itemid):
     item = session.query(Item).filter_by(id=itemid).one()
-    return render_template("one-item.html", item=item, addbtn="Add Item", categories=categories)
+    return render_template("one-item.html", item=item, categories=categories)
 
+# edit an item
 @app.route('/<int:itemid>/edititem', methods=['GET', 'POST'])
 def editItem(itemid):
+    if 'username' not in login_session:
+        redirect('/login')
+
     item = session.query(Item).filter_by(id=itemid).one()
+    if item.user_id != login_session['user_id']:
+        error="You cannot edit other people's items!"
+        return render_template("one-item.html", item=item,
+                        categories=categories, error=error)
+
     if request.method == 'POST':
         item.name = request.form['name']
         item.category = request.form['cate'].lower()
         item.description = request.form['description']
         session.commit()
+        flash("You have successfully edited this item!")
         return redirect('/item/' + str(item.id))
+    else:
+        return render_template('edit-item.html', item=item, categories=categories)
 
-    return render_template('edit-item.html', item=item, categories=categories)
-
+# delete an item
 @app.route('/<int:itemid>/deleteitem', methods=['GET', 'POST'])
 def deleteItem(itemid):
+    if 'username' not in login_session:
+        redirect('/login')
+
     item = session.query(Item).filter_by(id=itemid).one()
+    if item.user_id != login_session['user_id']:
+        error="You cannot delete other people's items!"
+        return render_template("one-item.html", item=item,
+                        categories=categories, error=error)
+
     if request.method == 'POST':
         session.delete(item)
         session.commit()
+        flash("You have successfully deleted your item!")
         return redirect('/')
-
-    return render_template('delete-item.html', item=item)
+    else:
+        return render_template('delete-item.html', item=item)
 
 if __name__ == '__main__':
     app.secret_key = 'super_secret_key'

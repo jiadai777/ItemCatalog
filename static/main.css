@@ -1,7 +1,8 @@
-.good-msg {
-	color: green;
+.msg {
+	border: 2px green solid;
+	background-color: lightgreen;
 }
 
-.bad-msg {
+.error {
 	color: red;
 }
