@@ -23,8 +23,8 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Categories <span class="caret"></span></a>
             <ul class="dropdown-menu">
             <!-- CATEGORY DROPDOWN MENU -->
-              {% for cate in categories %}
-                <li><a href={{"/categories/" ~ cate.lower()}}>{{cate.title()}}</a></li>
+              {% for c in categories %}
+                <li><a href={{"/categories/" ~ c.name.lower()}}>{{c.name.title()}}</a></li>
               {% endfor %}
             <!-- END OF CATEGORY DROPDOWN MENU -->
             </ul>

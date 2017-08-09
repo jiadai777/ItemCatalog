@@ -10,9 +10,9 @@
       <div class="form-group">
         <label>Category:</label>
         <select class="form-control" name="cate">
-          <option>{{item.category.title()}}</option>
+          <option>{{item.category.name.title()}}</option>
           {% for cate in categories %}
-              {% if cate != item.category %}
+              {% if cate != item.category.name %}
                 <option>{{cate.title()}}</option>
               {% endif %}
           {% endfor %}

@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, redirect, jsonify, url_for, f
 from sqlalchemy import create_engine, asc, desc
 from sqlalchemy.orm import sessionmaker
 from flask import session as login_session
-from database_setup import Base, Item, User
+from database_setup import Base, Item, User, Category
 import random
 import string
 from oauth2client.client import flow_from_clientsecrets
@@ -24,18 +24,13 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
-# A list of current categories for items
-categories = ["soccer", "basketball", "baseball", "frisbee",
-            "snowboarding", "rockclimbing", "football",
-            "skating", "hockey"]
-
 # Create anti-forgery state token
 @app.route('/login')
 def showLogin():
     state = ''.join(random.choice(string.ascii_uppercase + string.digits)
                     for x in xrange(32))
     login_session['state'] = state
-    return render_template('login.html', STATE=state)
+    return render_template('login.html', STATE=state, categories=getAllCat())
 
 # Google login
 @app.route('/gconnect', methods=['POST'])
@@ -197,21 +192,37 @@ def itemsJSON():
     items = session.query(Item).all()
     return jsonify(items=[i.serialize for i in items])
 
+# JSON APIs to view categories
+@app.route('/categories/JSON')
+def allCatJSON():
+    categories = session.query(Category)
+    return jsonify(categories=[c.serialize for c in categories])
+
+@app.route('/<cat>/JSON')
+def oneCatJSON(cat):
+    category = session.query(Category).filter_by(name=cat).one()
+    return jsonify(category=category.serialize)
+
+# helper functions for frequent querying
+def getAllCat():
+    return session.query(Category).order_by(asc(Category.name))
+
 # shows all items ordered by latest items
 @app.route('/')
 @app.route('/items')
 def showItems():
     items = session.query(Item).order_by(desc(Item.time_added))
     return render_template("items.html", items=items,
-                            categories=categories,
+                            categories=getAllCat(),
                             header="Latest items:")
 
 # show items of a specific category
 @app.route('/categories/<cate>')
 def showCategorizedItems(cate):
-    items = session.query(Item).filter_by(category=cate.lower())
+    category = session.query(Category).filter_by(name=cate).one()
+    items = session.query(Item).filter_by(category_id=category.id)
     return render_template("items.html", items=items,
-                            categories=categories,
+                            categories=getAllCat(),
                             header=cate.title()+
                             " Items ("+str(items.count())+" items)")
 
@@ -222,22 +233,29 @@ def addItem():
         redirect('/login')
     if request.method == 'POST':
         name = request.form['name']
-        cate = request.form['cate'].lower()
+        category = None
+        existing_c = session.query(Category).filter_by(name=request.form['cate'].lower())
+        # check if a category already exists
+        if existing_c.first():
+            category = existing_c.one()
+        else:
+            category = Category(name=c_name)
+            session.add(category)
         description = request.form['description']
         user_id=login_session['user_id']
-        item = Item(name=name, category=cate, user_id=user_id, description=description)
+        item = Item(name=name, category_id=category.id, user_id=user_id, description=description)
         session.add(item)
         session.commit()
         flash("Item successfully added!")
-        return redirect('/item/' + str(item.id))
+        return redirect(url_for('singleItem', itemid=item.id))
     else:
-        return render_template("new-item.html", categories=categories)
+        return render_template("new-item.html", categories=getAllCat())
 
 # shows a single item
 @app.route('/item/<int:itemid>')
 def singleItem(itemid):
     item = session.query(Item).filter_by(id=itemid).one()
-    return render_template("one-item.html", item=item, categories=categories)
+    return render_template("one-item.html", item=item, categories=getAllCat())
 
 # edit an item
 @app.route('/<int:itemid>/edititem', methods=['GET', 'POST'])
@@ -253,13 +271,21 @@ def editItem(itemid):
 
     if request.method == 'POST':
         item.name = request.form['name']
-        item.category = request.form['cate'].lower()
+        category = None
+        existing_c = session.query(Category).filter_by(name=request.form['cate'].lower())
+        # check if a category already exists
+        if existing_c.first():
+            category = existing_c.one()
+        else:
+            category = Category(name=c_name)
+            session.add(category)
+        item.category_id = category.id
         item.description = request.form['description']
         session.commit()
         flash("You have successfully edited this item!")
         return redirect('/item/' + str(item.id))
     else:
-        return render_template('edit-item.html', item=item, categories=categories)
+        return render_template('edit-item.html', item=item, categories=getAllCat())
 
 # delete an item
 @app.route('/<int:itemid>/deleteitem', methods=['GET', 'POST'])

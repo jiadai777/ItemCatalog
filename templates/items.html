@@ -4,7 +4,7 @@
 	<h1>{{header}}</h1>
 	{% for item in items %}
 		<h2><a href={{"/item/" ~ item.id}}>{{item.name}}</a></h2>
-		<span><i>({{item.category.title()}})</i></span>
+		<span><i>({{item.category.name.title()}})</i></span>
 		<p>Time added: {{item.time_added.strftime('%Y-%b-%d, %H:%M:%S')}}</p>
 		<br>
 	{% endfor %}

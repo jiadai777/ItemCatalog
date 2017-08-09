@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import random
 import string
-from database_setup import User, Base, Item
+from database_setup import User, Base, Item, Category
 from datetime import datetime
 
 """
@@ -37,9 +37,17 @@ for x in xrange(20):
                     for x in xrange(5))
 	description = ''.join(random.choice(string.ascii_lowercase + string.digits)
                     for x in xrange(200))
-	cate = categories[random.randint(0, len(categories) - 1)]
-	item = Item(name=name, category=cate, user_id=x,
-				description=description)
+	category = None
+	c_name = categories[random.randint(0, len(categories) - 1)]
+	existing_c = session.query(Category).filter_by(name=c_name)
+	if existing_c.first():
+		category = existing_c.one()
+	else:
+		category = Category(name=c_name)
+		session.add(category)
+	
+	item = Item(name=name, user_id=x,
+				description=description, category=category)
 	session.add(item)
 	session.commit()
 
