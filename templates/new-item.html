@@ -1,19 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h2>Add a new item:</h2>
+    <h2>{{header}}</h2>
     <form method="post">
       <div class="form-group">
         <label>Name:</label>
-        <input type="text" class="form-control" name="name">
+        <input type="text" class="form-control" name="name", value="{{name}}">
       </div>
       <div class="form-group">
         <label>Category:</label>
-        <input type="text" name="cate" class="form-control">
+        <input type="text" name="cate" class="form-control" value="{{category}}">
       </div>
       <div class="form-group">
         <label>Description:</label>
-        <textarea class="form-control" name="description" rows="8"></textarea>
+        <textarea class="form-control" name="description" rows="8">{{description}}</textarea>
       </div>
       <button type="submit" class="btn btn-primary">Submit</button>
       <a href="/" class="btn btn-default">Cancel</a>

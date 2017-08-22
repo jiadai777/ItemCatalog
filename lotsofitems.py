@@ -24,6 +24,8 @@ Base.metadata.bind = engine
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
 
+session.query(User).delete()
+session.query(Category).delete()
 session.query(Item).delete()
 session.commit()
 

@@ -22,12 +22,14 @@ class Category(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(50), nullable=False)
+    items = relationship('Item', cascade="save-update, merge, delete")
 
     @property
     def serialize(self):
         return {
             'name': self.name,
             'id': self.id,
+            'items': [i.serialize for i in self.items]
         }
 
 # defines an item

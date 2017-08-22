@@ -34,7 +34,7 @@
           {% endif %}
         </ul>
         {% if 'username' in session %}
-        <a href="#" class="col-lg-offset-7">Hello, {{username}}</a>
+        <a href="#" class="col-lg-offset-5">Hello, {{session['username']}}</a>
         <a href="/gdisconnect" class="btn navbar-btn btn-danger">Logout</a>
         {% else %}
         <a href="/login" class="btn navbar-btn btn-success">Login</a>
