@@ -11,6 +11,6 @@
 3. After booting your vagrant machine up and setting a ssh key, change directory to /vagrant/catalog
 4. Run the command python database_setup.py to set up the databse.
 5. Optional: Run python lotsofitems.py to randomly create 20 items with random names, categories, descriptions, and user_id of 1 to 20. **WARNING:  Doing so will delete all items in the current database.** The purpose of this file is to make quick test of main.py and its templates without manually creating a lot of items.
-6. Run python main.py. Then open your web browser and visit http://localhost:5000/ and you will see the homepage of this project..
+6. Run python main.py. Then open your web browser and visit http://localhost:5000/ and you will see the homepage of this project.
 
 ## You can now view all the items, and log in to add, edit, and delete your own items.
